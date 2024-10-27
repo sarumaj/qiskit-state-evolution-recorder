@@ -1,4 +1,4 @@
-[![release](https://github.com/sarumaj/qiskit-state-evolution-recorder/actions/workflows/release.yml/badge.svg)](https://github.com/sarumaj/qiskit-state-evolution-recorder/actions/workflows/build_and_release.yml)
+[![release](https://github.com/sarumaj/qiskit-state-evolution-recorder/actions/workflows/release.yml/badge.svg)](https://github.com/sarumaj/qiskit-state-evolution-recorder/actions/workflows/release.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/sarumaj/qiskit-state-evolution-recorder?logo=github)](https://github.com/sarumaj/qiskit-state-evolution-recorder/releases/latest)
 [![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/sarumaj/qiskit-state-evolution-recorder)](https://github.com/sarumaj/qiskit-state-evolution-recorder/blob/main/requirements.txt)
 
