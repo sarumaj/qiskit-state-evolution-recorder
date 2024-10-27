@@ -21,14 +21,6 @@ class StateEvolutionRecorder:
     """
     A class to record the evolution of a quantum state through a quantum circuit
 
-    Attributes:
-    -----------
-    qc: QuantumCircuit
-        The quantum circuit to record
-
-    initial_state: Statevector
-        The initial state of the quantum circuit
-
     Methods:
     --------
     evolve(intermediate_steps: int = 0)
