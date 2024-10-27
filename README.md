@@ -8,6 +8,12 @@
 
 Simple module allowing to record animations to trace changes in qubit states for arbitrary quantum circuits.
 
+## Installation
+
+```bash
+pip install qiskit-state-evolution-recorder
+```
+
 ## Usage
 
 ```python
