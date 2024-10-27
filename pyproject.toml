@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "qiskit_state_evolution_recorder"
 version = "0.1.0"
@@ -6,14 +10,6 @@ readme = "README.md"
 license = {text = "BSD-3-Clause"}
 authors = [
     { name = "Dawid Ciepiela", email = "71898979+sarumaj@users.noreply.github.com" }
-]
-dependencies = [
-    "matplotlib==3.9.2",
-    "matplotlib-inline==0.1.7",
-    "numpy==2.1.1",
-    "qiskit==1.2.4",
-    "qiskit-aer==0.15.1",
-    "pillow==11.0.0"
 ]
 requires-python = ">=3.6, <3.12"
 

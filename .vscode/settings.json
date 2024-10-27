@@ -10,6 +10,7 @@
     "fontsize",
     "frombuffer",
     "gridspec",
+    "Hadamart",
     "imshow",
     "linalg",
     "multivector",
@@ -18,6 +19,7 @@
     "qregs",
     "qubit",
     "qubits",
-    "Statevector"
+    "Statevector",
+    "Toffoli"
   ]
 }
