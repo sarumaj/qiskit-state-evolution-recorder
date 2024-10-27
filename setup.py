@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="qiskit_state_evolution_recorder",
-    version="0.1.1",
+    version='0.0.0',
     description="Simple module allowing to record animations to trace changes in qubit states for arbitrary quantum circuits.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
