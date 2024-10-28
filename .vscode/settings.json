@@ -15,6 +15,7 @@
     "linalg",
     "multivector",
     "ndarray",
+    "pylatexenc",
     "qiskit",
     "qregs",
     "qubit",

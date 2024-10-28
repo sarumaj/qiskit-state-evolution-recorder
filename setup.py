@@ -16,7 +16,8 @@ setup(
         "numpy==2.1.1",
         "qiskit==1.2.4",
         "qiskit-aer==0.15.1",
-        "pillow==11.0.0"
+        "pillow==11.0.0",
+        "pylatexenc==2.10"
     ],
     classifiers=[
         "License :: OSI Approved :: BSD License",
