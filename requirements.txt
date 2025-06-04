@@ -1,7 +1,0 @@
-matplotlib==3.9.2
-matplotlib-inline==0.1.7
-numpy==2.1.1
-qiskit==1.2.4
-qiskit-aer==0.15.1
-pillow==11.0.0
-pylatexenc==2.10

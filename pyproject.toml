@@ -7,20 +7,63 @@ name = "qiskit_state_evolution_recorder"
 version = "0.0.0"
 description = "Simple module allowing to record animations to trace changes in qubit states for arbitrary quantum circuits."
 readme = "README.md"
-license = {text = "BSD-3-Clause"}
+license = {file = "LICENSE"}
 authors = [
     { name = "Dawid Ciepiela", email = "71898979+sarumaj@users.noreply.github.com" }
 ]
-dependencies = [
-    "matplotlib==3.9.2",
-    "matplotlib-inline==0.1.7",
-    "numpy==2.1.1",
-    "qiskit==1.2.4",
-    "qiskit-aer==0.15.1",
-    "pillow==11.0.0",
-    "pylatexenc==2.10"
+requires-python = ">=3.6, <3.13"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.6, <3.12"
+dependencies = [
+    "matplotlib==3.10.3",
+    "matplotlib-inline==0.1.7",
+    "numpy==2.2.6",
+    "qiskit==1.4.3",
+    "qiskit-aer==0.17.1",
+    "pillow==11.2.1",
+    "pylatexenc==2.10",
+    "tqdm==4.67.1",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest==8.4.0",
+    "pytest-benchmark==5.1.0"
+]
+
+[project.scripts]
+qiskitrecorder = "qiskit_state_evolution_recorder.__main__:main"
 
 [project.urls]
 "Homepage" = "https://github.com/sarumaj/qiskit-state-evolution-recorder"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"qiskit_state_evolution_recorder" = [
+    "demo.qasm"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = ["-v"]
