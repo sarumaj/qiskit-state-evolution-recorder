@@ -16,13 +16,21 @@ class FrameRendererProcess:
     """Handles the multiprocessing logic for frame rendering."""
 
     def __init__(self, frame_renderer: FrameRenderer):
+        """
+        Initialize the FrameRendererProcess.
+
+        Parameters:
+        -----------
+        frame_renderer: FrameRenderer
+            The frame renderer to use
+        """
         self._frame_renderer = frame_renderer
         self._task_queue: Queue = Queue()
         self._result_queue: Queue = Queue()
         self._lock = Lock()
         self._processes: List[Process] = []
 
-    def start(self) -> None:
+    def start(self):
         """Start the rendering processes."""
         self._processes = [
             Process(target=self._render_task)
@@ -31,14 +39,14 @@ class FrameRendererProcess:
         for process in self._processes:
             process.start()
 
-    def stop(self) -> None:
+    def stop(self):
         """Stop the rendering processes."""
         for _ in self._processes:
             self._task_queue.put(None)
         for process in self._processes:
             process.join()
 
-    def _render_task(self) -> None:
+    def _render_task(self):
         """Process rendering tasks from the queue."""
         while True:
             if (args := self._task_queue.get()) is None:
@@ -56,7 +64,24 @@ class FrameRendererProcess:
         disk: bool = False,
         pbar: Optional[tqdm] = None
     ) -> Generator[Union[str, ndarray[uint8]], None, None]:
-        """Render frames using multiple processes."""
+        """Render frames using multiple processes.
+
+        Parameters:
+        -----------
+        states: Generator
+            The states to render
+        total_frames: int
+            The total number of frames to render
+        disk: bool
+            Whether to save the frames to disk
+        pbar: Optional[tqdm]
+            The progress bar to update
+
+        Returns:
+        --------
+        Generator[Union[str, ndarray[uint8]], None, None]
+            The rendered frames
+        """
         frames_processed = 0
         frame_buffer = {}
 
@@ -75,7 +100,8 @@ class FrameRendererProcess:
                     yield frame_buffer.pop(frames_processed)
                     frames_processed += 1
                     if pbar:
-                        pbar.update(1)
+                        pbar.n = min(frames_processed + 1, total_frames)
+                        pbar.refresh()
 
             except queue.Empty:
                 raise TimeoutError("Frame collection timed out")
@@ -103,7 +129,7 @@ class StateEvolutionRecorder:
         num_cols: int = 5,
         select: Optional[List[int]] = None,
         style: Optional[dict] = None,
-    ) -> None:
+    ):
         """
         Initialize the StateEvolutionRecorder.
 
@@ -174,7 +200,7 @@ class StateEvolutionRecorder:
         # Evolve the circuit to cover ground states
         self.evolve()
 
-    def evolve(self, intermediate_steps: int = 0) -> None:
+    def evolve(self, intermediate_steps: int = 0):
         """
         Evolve the initial state through the circuit.
 
@@ -210,7 +236,7 @@ class StateEvolutionRecorder:
         fps: int = 60,
         interval: int = 200,
         disk: bool = False
-    ) -> None:
+    ):
         """
         Record the frames into a video file.
 

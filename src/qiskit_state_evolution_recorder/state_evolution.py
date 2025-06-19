@@ -1,8 +1,10 @@
-from qiskit.circuit import QuantumCircuit, CircuitInstruction
+from qiskit.circuit import QuantumCircuit, CircuitInstruction, Qubit
 from qiskit.quantum_info import Statevector
 from qiskit.circuit import InstructionSet
 from typing import Generator, Iterable, Tuple, List, Set, Optional
 import numpy as np
+
+from .compability import proxy_obj
 
 
 def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
@@ -38,9 +40,10 @@ def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
     active_qubits: Set[str] = set()
     instruction_groups: List[List[CircuitInstruction]] = []
 
-    def get_qubit_identifier(qubit) -> str:
+    def get_qubit_identifier(qubit: Qubit) -> str:
         """Helper function to get a unique string identifier for a qubit."""
-        return f"{qubit._register.prefix}{qubit._index}"
+        qubit = proxy_obj(qubit)
+        return f"{qubit._register.prefix.orig_obj}{qubit._index.orig_obj}"
 
     for instruction in qc.data:
         operation_name = instruction.operation.name

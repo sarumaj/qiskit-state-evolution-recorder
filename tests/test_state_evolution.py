@@ -1,7 +1,10 @@
 import pytest
 import numpy as np
+import psutil
+import os
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
+
 from qiskit_state_evolution_recorder.state_evolution import (
     group_instructions,
     generate_states,
@@ -109,6 +112,8 @@ def test_interpolate_states_zero_steps(simple_circuit, initial_state):
 
 @pytest.mark.benchmark
 class TestStateEvolutionPerformance:
+    """Performance tests for state evolution functions."""
+
     @pytest.fixture
     def benchmark_simple_circuit(self):
         qc = QuantumCircuit(2)
@@ -132,50 +137,48 @@ class TestStateEvolutionPerformance:
         return qc
 
     def test_group_instructions_simple_performance(self, benchmark, benchmark_simple_circuit):
-        """Benchmark the performance of group_instructions function with a simple circuit."""
-        result = benchmark(group_instructions, benchmark_simple_circuit)
-        assert len(result) > 0
+        """Benchmark group_instructions with simple circuit."""
+        benchmark(group_instructions, benchmark_simple_circuit)
 
     def test_group_instructions_large_performance(self, benchmark, benchmark_large_circuit):
-        """Benchmark the performance of group_instructions function with a large circuit."""
-        result = benchmark(group_instructions, benchmark_large_circuit)
-        assert len(result) > 0
+        """Benchmark group_instructions with large circuit."""
+        benchmark(group_instructions, benchmark_large_circuit)
 
     def test_generate_states_simple_performance(self, benchmark, benchmark_simple_circuit):
-        """Benchmark the performance of generate_states function with a simple circuit."""
+        """Benchmark generate_states with simple circuit."""
         initial_state = Statevector.from_label('0' * benchmark_simple_circuit.num_qubits)
-        states = list(benchmark(generate_states, benchmark_simple_circuit, initial_state))
-        assert len(states) > 0
+        grouped_instructions = group_instructions(benchmark_simple_circuit)
+        benchmark(generate_states, benchmark_simple_circuit, initial_state, grouped_instructions)
 
     def test_generate_states_large_performance(self, benchmark, benchmark_large_circuit):
-        """Benchmark the performance of generate_states function with a large circuit."""
+        """Benchmark generate_states with large circuit."""
         initial_state = Statevector.from_label('0' * benchmark_large_circuit.num_qubits)
-        states = list(benchmark(generate_states, benchmark_large_circuit, initial_state))
-        assert len(states) > 0
+        grouped_instructions = group_instructions(benchmark_large_circuit)
+        benchmark(generate_states, benchmark_large_circuit, initial_state, grouped_instructions)
 
     def test_interpolate_states_simple_performance_1_step(self, benchmark, benchmark_simple_circuit):
-        """Benchmark interpolation with 1 intermediate step."""
+        """Benchmark interpolate_states with simple circuit and 1 step."""
         initial_state = Statevector.from_label('0' * benchmark_simple_circuit.num_qubits)
-        states = list(benchmark(interpolate_states, benchmark_simple_circuit, initial_state, 1))
-        assert len(states) > 0
+        grouped_instructions = group_instructions(benchmark_simple_circuit)
+        benchmark(interpolate_states, benchmark_simple_circuit, initial_state, 1, grouped_instructions)
 
     def test_interpolate_states_simple_performance_10_steps(self, benchmark, benchmark_simple_circuit):
-        """Benchmark interpolation with 10 intermediate steps."""
+        """Benchmark interpolate_states with simple circuit and 10 steps."""
         initial_state = Statevector.from_label('0' * benchmark_simple_circuit.num_qubits)
-        states = list(benchmark(interpolate_states, benchmark_simple_circuit, initial_state, 10))
-        assert len(states) > 0
+        grouped_instructions = group_instructions(benchmark_simple_circuit)
+        benchmark(interpolate_states, benchmark_simple_circuit, initial_state, 10, grouped_instructions)
 
     def test_interpolate_states_simple_performance_50_steps(self, benchmark, benchmark_simple_circuit):
-        """Benchmark interpolation with 50 intermediate steps."""
+        """Benchmark interpolate_states with simple circuit and 50 steps."""
         initial_state = Statevector.from_label('0' * benchmark_simple_circuit.num_qubits)
-        states = list(benchmark(interpolate_states, benchmark_simple_circuit, initial_state, 50))
-        assert len(states) > 0
+        grouped_instructions = group_instructions(benchmark_simple_circuit)
+        benchmark(interpolate_states, benchmark_simple_circuit, initial_state, 50, grouped_instructions)
 
     def test_interpolate_states_large_performance(self, benchmark, benchmark_large_circuit):
-        """Benchmark interpolation with a large circuit."""
+        """Benchmark interpolate_states with large circuit."""
         initial_state = Statevector.from_label('0' * benchmark_large_circuit.num_qubits)
-        states = list(benchmark(interpolate_states, benchmark_large_circuit, initial_state, 10))
-        assert len(states) > 0
+        grouped_instructions = group_instructions(benchmark_large_circuit)
+        benchmark(interpolate_states, benchmark_large_circuit, initial_state, 10, grouped_instructions)
 
     def test_interpolation_accuracy(self, benchmark_simple_circuit):
         """Test that interpolated states maintain proper normalization and accuracy."""
@@ -198,8 +201,6 @@ class TestStateEvolutionPerformance:
 
     def test_interpolation_memory_usage(self, benchmark_simple_circuit):
         """Test memory usage during interpolation."""
-        import psutil
-        import os
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss

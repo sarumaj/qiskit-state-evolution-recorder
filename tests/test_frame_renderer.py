@@ -1,10 +1,12 @@
 import pytest
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
-from qiskit_state_evolution_recorder.frame_renderer import FrameRenderer
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from qiskit.circuit import CircuitInstruction, Instruction
+
+from qiskit_state_evolution_recorder.frame_renderer import FrameRenderer
 
 
 @pytest.fixture
@@ -99,8 +101,6 @@ def test_plot_bloch_vectors(frame_renderer):
 
 def test_update_operation_text(frame_renderer):
     """Test updating operation text."""
-    from qiskit.circuit import CircuitInstruction
-    from qiskit.circuit import Instruction
     operation = Instruction(name='h', num_qubits=1, num_clbits=0, params=[])
     operations = [CircuitInstruction(
         operation=operation,

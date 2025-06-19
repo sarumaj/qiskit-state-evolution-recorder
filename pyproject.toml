@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "qiskit_state_evolution_recorder"
+name = "qiskit-state-evolution-recorder"
 version = "0.0.0"
 description = "Simple module allowing to record animations to trace changes in qubit states for arbitrary quantum circuits."
 readme = "README.md"
@@ -33,15 +33,18 @@ dependencies = [
     "matplotlib==3.10.3",
     "matplotlib-inline==0.1.7",
     "numpy==2.2.6",
-    "qiskit==1.4.3",
-    "qiskit-aer==0.17.1",
+    "qiskit>=1.4.3,<=2.1.0",
     "pillow==11.2.1",
     "pylatexenc==2.10",
     "tqdm==4.67.1",
 ]
 
 [project.optional-dependencies]
+opencv = [
+    "opencv-python==4.11.0.86"
+]
 test = [
+    "psutil==7.0.0",
     "pytest==8.4.0",
     "pytest-benchmark==5.1.0"
 ]
@@ -66,4 +69,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-addopts = ["-v"]
+addopts = ["-v", "--benchmark-disable"]
+filterwarnings = [
+    "ignore:This process .* is multi-threaded, use of fork\\(\\) may lead to deadlocks in the child:DeprecationWarning:multiprocessing.popen_fork",
+]

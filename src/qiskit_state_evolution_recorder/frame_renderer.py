@@ -3,15 +3,16 @@ from qiskit.visualization import plot_bloch_vector
 from qiskit.visualization.state_visualization import _bloch_multivector_data
 from qiskit.circuit import InstructionSet
 from qiskit.circuit import QuantumCircuit
-
 from numpy import uint8, ndarray, ceil, asarray
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from typing import Union, Tuple, Iterable, List, Optional
+from typing import Union, Tuple, Iterable, List, Optional, Any
 import os
 from tempfile import gettempdir
 from PIL.Image import open as open_image
 import logging
+
+from .compability import proxy_obj
 
 
 logger = logging.getLogger("qiskit_state_evolution_recorder.frame_renderer")
@@ -36,7 +37,7 @@ class FrameRenderer:
         num_cols: int = 5,
         select: Optional[List[int]] = None,
         style: Optional[dict] = None,
-    ) -> None:
+    ):
         """
         Initialize the FrameRenderer.
 
@@ -86,7 +87,7 @@ class FrameRenderer:
         # Draw the quantum circuit diagram
         self._qc.draw(output='mpl', fold=-1, style=self._style, ax=self._ax[0][0])
 
-    def _setup_layout(self, num_cols: int) -> None:
+    def _setup_layout(self, num_cols: int):
         """
         Setup the layout for visualization.
 
@@ -119,7 +120,7 @@ class FrameRenderer:
         # Add Bloch sphere axes
         self._allocate_bloch_axes()
 
-    def _allocate_bloch_axes(self) -> None:
+    def _allocate_bloch_axes(self):
         """
         Allocate the axes for the bloch vectors.
         """
@@ -209,7 +210,7 @@ class FrameRenderer:
         except Exception as e:
             raise RuntimeError(f"Error converting frame to image array: {str(e)}")
 
-    def _plot_bloch_vectors(self, state: Statevector) -> None:
+    def _plot_bloch_vectors(self, state: Statevector):
         """
         Plot Bloch vectors for the current state.
 
@@ -242,7 +243,7 @@ class FrameRenderer:
                         ax=ax
                     )
 
-    def _update_operation_text(self, operations: Iterable[InstructionSet]) -> None:
+    def _update_operation_text(self, operations: Iterable[InstructionSet]):
         """
         Update the text describing the current operations.
 
@@ -255,10 +256,21 @@ class FrameRenderer:
             return
 
         fragments = []
+
+        class SafeObject:
+            def __init__(self, core: Any):
+                self.core = core
+
+            def __getattr__(self, name: str) -> Any:
+                for prop in (name, f"_{name}"):
+                    if hasattr(self.core, prop):
+                        return SafeObject(getattr(self.core, prop))
+                return None
+
         for gate in operations:
             fragments.append("{0} -> {1}".format(
                 gate.operation.name,
-                [f"{q._register._name}{q._index}" for q in gate.qubits]
+                [f"{q._register.name.orig_obj}{q._index.orig_obj}" for q in map(proxy_obj, gate.qubits)]
             ))
 
         self._text = self._fig.text(
@@ -269,7 +281,7 @@ class FrameRenderer:
             transform=self._fig.transFigure
         )
 
-    def update_frame(self, image: Union[str, ndarray[uint8]], disk: bool) -> None:
+    def update_frame(self, image: Union[str, ndarray[uint8]], disk: bool):
         """
         Update the figure with a new frame.
 
@@ -318,7 +330,7 @@ class FrameRenderer:
         except Exception as e:
             raise RuntimeError(f"Error displaying frame: {str(e)}")
 
-    def close(self) -> None:
+    def close(self):
         """
         Clean up resources used by the frame renderer.
 

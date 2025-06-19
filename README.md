@@ -50,3 +50,39 @@ video
 ```
 
 https://github.com/user-attachments/assets/8a3c8567-cbb8-4271-9c2c-9588130c01b0
+
+## Testing
+
+### Running Tests
+
+The project includes both unit tests and performance tests. Performance tests can be run optionally.
+
+```bash
+# Run all tests except performance tests
+python -m pytest --benchmark-skip
+
+# Run all tests including performance tests
+python -m pytest --benchmark-enable
+
+# Run only performance tests
+python -m pytest --benchmark-enable --benchmark-only
+```
+
+### Backend Support
+
+The library supports multiple animation backends:
+
+- **FFmpeg** (default, preferred): Uses matplotlib's FuncAnimation with FFmpeg
+- **OpenCV**: Uses OpenCV for video creation (fallback when FFmpeg is not available)
+
+The system automatically selects the best available backend. To install additional backends:
+
+```bash
+# Install OpenCV backend
+pip install opencv-python
+
+# Install FFmpeg (system-dependent)
+# Ubuntu/Debian: sudo apt-get install ffmpeg
+# macOS: brew install ffmpeg
+# Windows: Download from https://ffmpeg.org/download.html
+```
