@@ -33,7 +33,7 @@ dependencies = [
     "matplotlib==3.10.3",
     "matplotlib-inline==0.1.7",
     "numpy==2.2.6",
-    "qiskit>=1.4.3,<=2.1.0",
+    "qiskit>=1.4.3,<=2.1.1",
     "pillow==11.2.1",
     "pylatexenc==2.10",
     "tqdm==4.67.1",
@@ -41,7 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 opencv = [
-    "opencv-python==4.11.0.86"
+    "opencv-python==4.12.0.88"
 ]
 test = [
     "psutil==7.0.0",
