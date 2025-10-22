@@ -33,7 +33,7 @@ dependencies = [
     "matplotlib==3.10.6",
     "matplotlib-inline==0.1.7",
     "numpy==2.3.3",
-    "qiskit>=1.4.3,<=2.1.1",
+    "qiskit>=2.2.2,<=2.2.2",
     "pillow==11.3.0",
     "pylatexenc==2.10",
     "tqdm==4.67.1",
