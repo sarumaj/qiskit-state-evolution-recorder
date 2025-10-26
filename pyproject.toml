@@ -31,8 +31,8 @@ classifiers = [
 ]
 dependencies = [
     "matplotlib==3.10.7",
-    "matplotlib-inline==0.1.7",
-    "numpy==2.3.3",
+    "matplotlib-inline==0.2.1",
+    "numpy==2.3.4",
     "qiskit>=2.2.2,<=2.2.2",
     "pillow==12.0.0",
     "pylatexenc==2.10",
@@ -44,7 +44,7 @@ opencv = [
     "opencv-python==4.12.0.88"
 ]
 test = [
-    "psutil==7.1.1",
+    "psutil==7.1.2",
     "pytest==8.4.2",
     "pytest-benchmark==5.1.0"
 ]
