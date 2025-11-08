@@ -11,7 +11,7 @@ license = {file = "LICENSE"}
 authors = [
     { name = "Dawid Ciepiela", email = "71898979+sarumaj@users.noreply.github.com" }
 ]
-requires-python = ">=3.6, <3.13"
+requires-python = ">=3.6"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
