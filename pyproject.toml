@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "matplotlib==3.10.7",
+    "matplotlib==3.10.8",
     "matplotlib-inline==0.2.1",
     "numpy<2.3.6",
     "qiskit>=2.2.3,<=2.2.3",
