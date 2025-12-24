@@ -1,15 +1,51 @@
+# pyright: basic
+
+import queue
+from multiprocessing import Lock, Process, Queue, cpu_count
+from pathlib import Path
+from typing import Any, Generator, List, Optional, Union
+
+from numpy import ndarray
 from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info import Statevector
-from multiprocessing import Process, Queue, cpu_count, Lock
-from typing import Generator, Union, Optional, List
-from numpy import ndarray, uint8
 from tqdm import tqdm
-import queue
-from pathlib import Path
 
-from .state_evolution import generate_states, interpolate_states, group_instructions
-from .frame_renderer import FrameRenderer
 from .animation import AnimationRecorder
+from .frame_renderer import FrameRenderer
+from .state_evolution import generate_states, group_instructions, interpolate_states
+
+
+def _render_worker(task_queue: Queue, result_queue: Queue, frame_renderer: FrameRenderer):
+    """Worker function for rendering frames in a separate process.
+
+    This function runs in a separate process and processes rendering tasks from the queue.
+    It continues until it receives a None sentinel value, which signals it to terminate.
+
+    Parameters:
+    -----------
+    task_queue: Queue
+        Queue to receive rendering tasks from
+    result_queue: Queue
+        Queue to send results to
+    frame_renderer: FrameRenderer
+        The frame renderer to use for rendering
+    """
+    try:
+        while True:
+            task = task_queue.get()
+            if task is None:
+                break
+
+            try:
+                index, frame_data, disk = task
+                result = frame_renderer.render_frame(index, frame_data, disk)
+                result_queue.put((index, result))
+            except Exception as e:
+                # Send error back to parent process
+                result_queue.put((index, e))
+    finally:
+        # Ensure worker exits cleanly
+        pass
 
 
 class FrameRendererProcess:
@@ -27,13 +63,12 @@ class FrameRendererProcess:
         self._frame_renderer = frame_renderer
         self._task_queue: Queue = Queue()
         self._result_queue: Queue = Queue()
-        self._lock = Lock()
         self._processes: List[Process] = []
 
     def start(self):
         """Start the rendering processes."""
         self._processes = [
-            Process(target=self._render_task)
+            Process(target=_render_worker, args=(self._task_queue, self._result_queue, self._frame_renderer))
             for _ in range(cpu_count())
         ]
         for process in self._processes:
@@ -46,24 +81,9 @@ class FrameRendererProcess:
         for process in self._processes:
             process.join()
 
-    def _render_task(self):
-        """Process rendering tasks from the queue."""
-        while True:
-            if (args := self._task_queue.get()) is None:
-                break
-
-            index, frame_data, disk = args
-            with self._lock:
-                result = self._frame_renderer.render_frame(index, frame_data, disk)
-                self._result_queue.put((index, result))
-
     def render_frames(
-        self,
-        states: Generator,
-        total_frames: int,
-        disk: bool = False,
-        pbar: Optional[tqdm] = None
-    ) -> Generator[Union[str, ndarray[uint8]], None, None]:
+        self, states: Generator, total_frames: int, disk: bool = False, pbar: Optional[tqdm] = None
+    ) -> Generator[Union[str, ndarray[Any, Any]], None, None]:
         """Render frames using multiple processes.
 
         Parameters:
@@ -93,6 +113,11 @@ class FrameRendererProcess:
         while frames_processed < total_frames:
             try:
                 index, result = self._result_queue.get(timeout=30)
+
+                # Check if the result is an exception
+                if isinstance(result, Exception):
+                    raise RuntimeError(f"Frame {index} rendering failed: {str(result)}")
+
                 frame_buffer[index] = result
 
                 # Yield frames in order
@@ -161,13 +186,12 @@ class StateEvolutionRecorder:
             raise ValueError("Quantum circuit cannot be empty")
 
         self._qc = qc
-        self._initial_state = initial_state or Statevector.from_label('0'*qc.num_qubits)
+        self._initial_state = initial_state or Statevector.from_label("0" * qc.num_qubits)
 
         # Validate initial state
         if self._initial_state.dim != 2**qc.num_qubits:
             raise ValueError(
-                f"Initial state dimension {self._initial_state.dim} "
-                f"doesn't match circuit size {2**qc.num_qubits}"
+                f"Initial state dimension {self._initial_state.dim} " f"doesn't match circuit size {2**qc.num_qubits}"
             )
 
         # Validate selected qubits
@@ -187,12 +211,7 @@ class StateEvolutionRecorder:
 
         # Initialize components
         self._frame_renderer = FrameRenderer(
-            qc=self._qc,
-            figsize=figsize,
-            dpi=dpi,
-            num_cols=num_cols,
-            select=self._selected_qubits,
-            style=style
+            qc=self._qc, figsize=figsize, dpi=dpi, num_cols=num_cols, select=self._selected_qubits, style=style
         )
         self._animation_recorder = AnimationRecorder(self._frame_renderer)
         self._frame_renderer_process = FrameRendererProcess(self._frame_renderer)
@@ -229,14 +248,7 @@ class StateEvolutionRecorder:
         # Update size to include intermediate steps
         self._size = num_groups * intermediate_steps + 1
 
-    def record(
-        self,
-        filename: str,
-        *,
-        fps: int = 60,
-        interval: int = 200,
-        disk: bool = False
-    ):
+    def record(self, filename: str, *, fps: int = 60, interval: int = 200, disk: bool = False):
         """
         Record the frames into a video file.
 
@@ -271,22 +283,21 @@ class StateEvolutionRecorder:
             try:
                 with (
                     tqdm(total=self._size, desc="Rendering frames") as pbar_rendering,
-                    tqdm(total=self._size, desc="Encoding video") as pbar_encoding
+                    tqdm(total=self._size, desc="Encoding video") as pbar_encoding,
                 ):
+                    if self._states is None:
+                        raise RuntimeError("No states to record. Please run evolve() first.")
                     self._frame_renderer_process.start()
                     self._animation_recorder.record(
                         filename=filename,
                         frames=self._frame_renderer_process.render_frames(
-                            self._states,
-                            self._size,
-                            disk,
-                            pbar_rendering
+                            self._states, self._size, disk, pbar_rendering
                         ),
                         total_frames=self._size,
                         fps=fps,
                         interval=interval,
                         disk=disk,
-                        pbar=pbar_encoding
+                        pbar=pbar_encoding,
                     )
             finally:
                 self._frame_renderer_process.stop()
@@ -294,4 +305,5 @@ class StateEvolutionRecorder:
     @property
     def size(self) -> int:
         """The number of frames to record."""
+        return self._size
         return self._size

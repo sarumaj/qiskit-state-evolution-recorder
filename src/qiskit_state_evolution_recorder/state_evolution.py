@@ -1,13 +1,17 @@
-from qiskit.circuit import QuantumCircuit, CircuitInstruction, Qubit
-from qiskit.quantum_info import Statevector
-from qiskit.circuit import InstructionSet
-from typing import Generator, Iterable, Tuple, List, Set, Optional
+# pyright: basic
+
+from typing import Generator, Iterable, List, Optional, Set, Tuple, TypeAlias
+
 import numpy as np
+from qiskit.circuit import CircuitInstruction, InstructionSet, QuantumCircuit, Qubit
+from qiskit.quantum_info import Statevector
 
 from .compatibility import proxy_obj
 
+CircuitInstructionType: TypeAlias = CircuitInstruction  # pyright: ignore[reportInvalidTypeForm]
 
-def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
+
+def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstructionType]]:
     """
     Group instructions in a quantum circuit based on qubit dependencies.
 
@@ -36,9 +40,9 @@ def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
     if not qc or not qc.data:
         return []
 
-    current_group: List[CircuitInstruction] = []
+    current_group: List[CircuitInstructionType] = []
     active_qubits: Set[str] = set()
-    instruction_groups: List[List[CircuitInstruction]] = []
+    instruction_groups: List[List[CircuitInstructionType]] = []
 
     def get_qubit_identifier(qubit: Qubit) -> str:
         """Helper function to get a unique string identifier for a qubit."""
@@ -49,7 +53,7 @@ def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
         operation_name = instruction.operation.name
 
         # Handle barrier instructions
-        if operation_name == 'barrier':
+        if operation_name == "barrier":
             if current_group:
                 instruction_groups.append(current_group)
                 current_group = []
@@ -57,7 +61,7 @@ def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
             continue
 
         # Skip measurement instructions
-        if operation_name == 'measure':
+        if operation_name == "measure":
             continue
 
         # Get qubits involved in the current instruction
@@ -83,7 +87,7 @@ def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
 def generate_states(
     qc: QuantumCircuit,
     initial_state: Statevector,
-    grouped_instructions: Optional[List[List[CircuitInstruction]]] = None
+    grouped_instructions: Optional[List[List[CircuitInstructionType]]] = None,
 ) -> Generator[Tuple[Statevector, Iterable[InstructionSet]], None, None]:
     """
     Generate the states of the quantum circuit at each step.
@@ -113,9 +117,7 @@ def generate_states(
         If the initial state dimension doesn't match the circuit
     """
     if initial_state.dim != 2**qc.num_qubits:
-        raise ValueError(
-            f"Initial state dimension {initial_state.dim} doesn't match circuit size {2**qc.num_qubits}"
-        )
+        raise ValueError(f"Initial state dimension {initial_state.dim} doesn't match circuit size {2**qc.num_qubits}")
 
     state = initial_state
     if grouped_instructions is None:
@@ -127,11 +129,7 @@ def generate_states(
         # Create a sub-circuit for the current instruction group
         sub_circuit = QuantumCircuit(*qc.qregs, *qc.cregs)
         for instruction in instructionSet:
-            sub_circuit.append(
-                instruction.operation,
-                instruction.qubits,
-                instruction.clbits
-            )
+            sub_circuit.append(instruction.operation, instruction.qubits, instruction.clbits)
 
         state = state.evolve(sub_circuit)
 
@@ -143,7 +141,7 @@ def interpolate_states(
     qc: QuantumCircuit,
     initial_state: Statevector,
     intermediate_steps: int,
-    grouped_instructions: Optional[List[List[CircuitInstruction]]] = None
+    grouped_instructions: Optional[List[List[CircuitInstructionType]]] = None,
 ) -> Generator[Tuple[Statevector, Iterable[InstructionSet]], None, None]:
     """
     Interpolate between two adjacent states to smooth the transition.
@@ -189,7 +187,7 @@ def interpolate_states(
         for i in np.linspace(0, 1, intermediate_steps, endpoint=False):
             intermediate_state = (1 - i) * lhs[0].data + i * rhs[0].data
             # Normalize the intermediate state
-            if (state_norm := np.linalg.norm(intermediate_state)):
+            if state_norm := np.linalg.norm(intermediate_state):
                 intermediate_state = intermediate_state / state_norm
             # Yield the intermediate state
             yield (Statevector(intermediate_state), lhs[1])

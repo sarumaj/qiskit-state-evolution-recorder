@@ -1,7 +1,12 @@
+# pyright: basic
+
 import logging
 import os
 from tempfile import gettempdir
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, TypeAlias, Union
+
+FileDescriptorOrPath: TypeAlias = int | str | os.PathLike[str] | os.PathLike[bytes] | bytes
+
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -94,7 +99,7 @@ class FrameRenderer:
         self._setup_layout(num_cols)
 
         # Draw the quantum circuit diagram
-        self._qc.draw(output="mpl", fold=-1, style=self._style, ax=self._ax[0][0])
+        self._qc.draw(output="mpl", fold=-1, style=self._style, ax=self._ax[0][0] if self._ax else None)
 
     def _setup_layout(self, num_cols: int):
         """
@@ -118,6 +123,9 @@ class FrameRenderer:
         self._gs.set_height_ratios([3] + [2] * (num_rows - 1))
 
         # Add circuit diagram
+        if not self._fig:
+            raise RuntimeError("Figure not initialized")
+
         self._ax = [[self._fig.add_subplot(self._gs[0, :])]]
 
         # Create qubit partitions for Bloch spheres
@@ -132,11 +140,20 @@ class FrameRenderer:
         """
         Allocate the axes for the bloch vectors.
         """
+        if not self._fig:
+            raise RuntimeError("Figure not initialized")
+
+        if not self._gs:
+            raise RuntimeError("GridSpec not initialized")
+
+        if not self._ax:
+            self._ax = []
+
         if len(self._ax) < 2:
             self._ax.extend(
                 [
                     [self._fig.add_subplot(self._gs[i + 1, j], projection="3d") for j in range(len(partition))]
-                    for i, partition in enumerate(self._qubit_partitions)
+                    for i, partition in enumerate(self._qubit_partitions or [])
                 ]
             )
 
@@ -147,7 +164,7 @@ class FrameRenderer:
 
     def render_frame(
         self, index: int, frame_data: Tuple[Statevector, Iterable[InstructionSet]], disk: bool
-    ) -> Union[str, ndarray[uint8]]:
+    ) -> Union[str, ndarray[Any, Any]]:
         """
         Render a frame with the current quantum state and operations.
 
@@ -182,7 +199,7 @@ class FrameRenderer:
         if self._text:
             self._text.remove()
 
-        for axes in self._ax[1:]:
+        for axes in self._ax[1:] if self._ax else []:
             for ax in axes:
                 ax.clear()
 
@@ -194,6 +211,9 @@ class FrameRenderer:
 
         # Update the operation text
         self._update_operation_text(operations)
+
+        if not self._fig:
+            raise RuntimeError("Figure not initialized")
 
         # Draw the figure
         self._fig.canvas.draw()
@@ -209,7 +229,9 @@ class FrameRenderer:
 
         # Convert figure to image array
         try:
-            img = asarray(self._fig.canvas.renderer.buffer_rgba())[:, :, :3]
+            img = asarray(self._fig.canvas.renderer.buffer_rgba())[  # pyright: ignore[reportAttributeAccessIssue]
+                :, :, :3
+            ]
             return img
         except Exception as e:
             raise RuntimeError(f"Error converting frame to image array: {str(e)}")
@@ -232,9 +254,11 @@ class FrameRenderer:
             raise ValueError(f"State dimension {state.dim} doesn't match circuit size {2**self._qc.num_qubits}")
 
         bloch_data = _bloch_multivector_data(state)
-        for i, partition in enumerate(self._qubit_partitions):
+        for i, partition in enumerate(self._qubit_partitions or []):
             for j, qubit in enumerate(partition):
                 try:
+                    if not self._ax:
+                        raise RuntimeError("Axes not initialized")
                     ax = self._ax[i + 1][j]
                 except IndexError:
                     raise ValueError(f"IndexError: {i + 1}, {j}: {self._ax}")
@@ -268,16 +292,22 @@ class FrameRenderer:
         for gate in operations:
             fragments.append(
                 "{0} -> {1}".format(
-                    gate.operation.name,
-                    [f"{q._register.name.orig_obj}{q._index.orig_obj}" for q in map(proxy_obj, gate.qubits)],
+                    gate.operation.name,  # pyright: ignore[reportAttributeAccessIssue]
+                    [
+                        f"{q._register.name.orig_obj}{q._index.orig_obj}"
+                        for q in map(proxy_obj, gate.qubits)  # pyright: ignore[reportAttributeAccessIssue]
+                    ],
                 )
             )
+
+        if not self._fig:
+            raise RuntimeError("Figure not initialized")
 
         self._text = self._fig.text(
             0.5, 0.95, " | ".join(fragments), ha="center", va="bottom", fontsize=15, transform=self._fig.transFigure
         )
 
-    def update_frame(self, image: Union[str, ndarray[uint8]], disk: bool):
+    def update_frame(self, image: Union[FileDescriptorOrPath, ndarray[Any, Any]], disk: bool):
         """
         Update the figure with a new frame.
 
@@ -303,8 +333,11 @@ class FrameRenderer:
         if self._text:
             self._text.remove()
 
+        if not self._fig:
+            raise RuntimeError("Figure not initialized")
+
         # Clear and remove all existing axes (circuit diagram and Bloch spheres)
-        if len(self._ax) > 1:
+        if self._ax and len(self._ax) > 1:
             for axes in self._ax:
                 for ax in axes:
                     ax.clear()
@@ -312,17 +345,24 @@ class FrameRenderer:
             # Create a new axes for the image that takes up the entire figure space
             # [0, 0, 1, 1] means: bottom-left corner at (0,0) with width=1 and height=1
             # This ensures the image fills the entire figure without any margins
-            self._ax = [[self._fig.add_axes([0, 0, 1, 1])]]
+            self._ax = [[self._fig.add_axes((0, 0, 1, 1))]]
             self._ax[0][0].axis("off")
 
         try:
+            if not self._ax:
+                raise RuntimeError("Axes not initialized")
+
             if disk:
-                if not os.path.exists(image):
+                if isinstance(
+                    image, FileDescriptorOrPath  # pyright: ignore[reportArgumentType]
+                ) and not os.path.exists(image):
                     raise FileNotFoundError(f"Frame file not found: {image}")
-                img = open_image(image)
+                img = open_image(image)  # pyright: ignore[reportArgumentType]
                 self._ax[0][0].imshow(img)
-            else:
+            elif isinstance(image, ndarray):
                 self._ax[0][0].imshow(image)
+            else:
+                raise ValueError("Image must be a filename (if disk=True) or an image array (if disk=False)")
         except Exception as e:
             raise RuntimeError(f"Error displaying frame: {str(e)}")
 
@@ -356,8 +396,6 @@ class FrameRenderer:
 
             if self._fig:
                 try:
-                    # Disconnect all events to prevent callback issues
-                    plt.disconnect("all")
                     # Close the figure safely
                     plt.close(self._fig)
                 except Exception as e:

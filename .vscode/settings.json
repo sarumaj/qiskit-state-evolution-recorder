@@ -16,6 +16,7 @@
     "linalg",
     "multivector",
     "ndarray",
+    "pbar",
     "pylatexenc",
     "qiskit",
     "qregs",
