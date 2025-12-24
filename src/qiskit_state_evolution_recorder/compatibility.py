@@ -54,14 +54,19 @@ def proxy_obj(obj: Any) -> Any:
             Any
                 The attribute value wrapped in an Proxy
             """
-            props = (name, f"_{name}", f"__{name}", f"_{self._name}__{name}",)
+            props = (
+                name,
+                f"_{name}",
+                f"__{name}",
+                f"_{self._name}__{name}",
+            )
             if name.startswith("_"):
-                props = (name, f"_{self._name}__{name}", name[1:],)
-            results = [
-                (prop, Proxy(getattr(self._obj, prop)))
-                for prop in props
-                if hasattr(self._obj, prop)
-            ]
+                props = (
+                    name,
+                    f"_{self._name}__{name}",
+                    name[1:],
+                )
+            results = [(prop, Proxy(getattr(self._obj, prop))) for prop in props if hasattr(self._obj, prop)]
             if len(results) == 1:
                 return results[0][1]
             elif len(results) > 1:

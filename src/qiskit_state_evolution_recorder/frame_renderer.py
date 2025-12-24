@@ -1,19 +1,28 @@
+import logging
+import os
+from tempfile import gettempdir
+from typing import Any, Iterable, List, Optional, Tuple, Union
+
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+from matplotlib import get_backend
+from matplotlib import use as use_backend
+from numpy import asarray, ceil, ndarray, uint8
+from PIL.Image import open as open_image
+from qiskit.circuit import InstructionSet, QuantumCircuit
 from qiskit.quantum_info import Statevector
 from qiskit.visualization import plot_bloch_vector
 from qiskit.visualization.state_visualization import _bloch_multivector_data
-from qiskit.circuit import InstructionSet
-from qiskit.circuit import QuantumCircuit
-from numpy import uint8, ndarray, ceil, asarray
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-from typing import Union, Tuple, Iterable, List, Optional, Any
-import os
-from tempfile import gettempdir
-from PIL.Image import open as open_image
-import logging
 
-from .compability import proxy_obj
+from .compatibility import proxy_obj
 
+# Use Agg backend by default to avoid GUI-related issues in headless environments
+# This can be overridden before importing if needed
+if get_backend() in ("TkAgg", "Qt5Agg"):
+    try:
+        use_backend("Agg", force=True)
+    except Exception:
+        pass
 
 logger = logging.getLogger("qiskit_state_evolution_recorder.frame_renderer")
 
@@ -75,7 +84,7 @@ class FrameRenderer:
         self._qc = qc
         self._fig = plt.figure(figsize=figsize, dpi=dpi)
         self._selected_qubits = list(range(qc.num_qubits)) if not select else sorted(select)
-        self._style = style or {'name': 'textbook'}
+        self._style = style or {"name": "textbook"}
         self._text = None
         self._ax = None
         self._gs = None
@@ -85,7 +94,7 @@ class FrameRenderer:
         self._setup_layout(num_cols)
 
         # Draw the quantum circuit diagram
-        self._qc.draw(output='mpl', fold=-1, style=self._style, ax=self._ax[0][0])
+        self._qc.draw(output="mpl", fold=-1, style=self._style, ax=self._ax[0][0])
 
     def _setup_layout(self, num_cols: int):
         """
@@ -113,8 +122,7 @@ class FrameRenderer:
 
         # Create qubit partitions for Bloch spheres
         self._qubit_partitions = [
-            self._selected_qubits[i:i + num_cols]
-            for i in range(0, len(self._selected_qubits), num_cols)
+            self._selected_qubits[i : i + num_cols] for i in range(0, len(self._selected_qubits), num_cols)
         ]
 
         # Add Bloch sphere axes
@@ -125,24 +133,20 @@ class FrameRenderer:
         Allocate the axes for the bloch vectors.
         """
         if len(self._ax) < 2:
-            self._ax.extend([
+            self._ax.extend(
                 [
-                    self._fig.add_subplot(self._gs[i + 1, j], projection="3d")
-                    for j in range(len(partition))
+                    [self._fig.add_subplot(self._gs[i + 1, j], projection="3d") for j in range(len(partition))]
+                    for i, partition in enumerate(self._qubit_partitions)
                 ]
-                for i, partition in enumerate(self._qubit_partitions)
-            ])
+            )
 
             # Hide axes for Bloch spheres
             for axes in self._ax[1:]:
                 for ax in axes:
-                    ax.axis('off')
+                    ax.axis("off")
 
     def render_frame(
-        self,
-        index: int,
-        frame_data: Tuple[Statevector, Iterable[InstructionSet]],
-        disk: bool
+        self, index: int, frame_data: Tuple[Statevector, Iterable[InstructionSet]], disk: bool
     ) -> Union[str, ndarray[uint8]]:
         """
         Render a frame with the current quantum state and operations.
@@ -225,9 +229,7 @@ class FrameRenderer:
             If the state dimension doesn't match the circuit
         """
         if state.dim != 2**self._qc.num_qubits:
-            raise ValueError(
-                f"State dimension {state.dim} doesn't match circuit size {2**self._qc.num_qubits}"
-            )
+            raise ValueError(f"State dimension {state.dim} doesn't match circuit size {2**self._qc.num_qubits}")
 
         bloch_data = _bloch_multivector_data(state)
         for i, partition in enumerate(self._qubit_partitions):
@@ -237,11 +239,7 @@ class FrameRenderer:
                 except IndexError:
                     raise ValueError(f"IndexError: {i + 1}, {j}: {self._ax}")
                 else:
-                    plot_bloch_vector(
-                        bloch_data[qubit],
-                        f"q{qubit}",
-                        ax=ax
-                    )
+                    plot_bloch_vector(bloch_data[qubit], f"q{qubit}", ax=ax)
 
     def _update_operation_text(self, operations: Iterable[InstructionSet]):
         """
@@ -268,17 +266,15 @@ class FrameRenderer:
                 return None
 
         for gate in operations:
-            fragments.append("{0} -> {1}".format(
-                gate.operation.name,
-                [f"{q._register.name.orig_obj}{q._index.orig_obj}" for q in map(proxy_obj, gate.qubits)]
-            ))
+            fragments.append(
+                "{0} -> {1}".format(
+                    gate.operation.name,
+                    [f"{q._register.name.orig_obj}{q._index.orig_obj}" for q in map(proxy_obj, gate.qubits)],
+                )
+            )
 
         self._text = self._fig.text(
-            0.5, 0.95,
-            " | ".join(fragments),
-            ha='center', va='bottom',
-            fontsize=15,
-            transform=self._fig.transFigure
+            0.5, 0.95, " | ".join(fragments), ha="center", va="bottom", fontsize=15, transform=self._fig.transFigure
         )
 
     def update_frame(self, image: Union[str, ndarray[uint8]], disk: bool):
@@ -317,7 +313,7 @@ class FrameRenderer:
             # [0, 0, 1, 1] means: bottom-left corner at (0,0) with width=1 and height=1
             # This ensures the image fills the entire figure without any margins
             self._ax = [[self._fig.add_axes([0, 0, 1, 1])]]
-            self._ax[0][0].axis('off')
+            self._ax[0][0].axis("off")
 
         try:
             if disk:
@@ -341,16 +337,36 @@ class FrameRenderer:
         """
         try:
             if self._text:
-                self._text.remove()
+                try:
+                    self._text.remove()
+                except Exception as e:
+                    logger.warning(f"Error removing text: {str(e)}")
 
             if self._ax:
-                for axes in self._ax:
-                    for ax in axes:
-                        ax.clear()
-                        ax.remove()
+                try:
+                    for axes in self._ax:
+                        for ax in axes:
+                            try:
+                                ax.clear()
+                                ax.remove()
+                            except Exception as e:
+                                logger.warning(f"Error clearing axes: {str(e)}")
+                except Exception as e:
+                    logger.warning(f"Error processing axes: {str(e)}")
 
             if self._fig:
-                plt.close(self._fig)
+                try:
+                    # Disconnect all events to prevent callback issues
+                    plt.disconnect("all")
+                    # Close the figure safely
+                    plt.close(self._fig)
+                except Exception as e:
+                    logger.warning(f"Error closing figure: {str(e)}")
+                    # Force cleanup even if close fails
+                    try:
+                        self._fig.clear()
+                    except Exception:
+                        pass
 
             self._text = None
             self._ax = None

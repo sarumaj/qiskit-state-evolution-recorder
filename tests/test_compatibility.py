@@ -1,5 +1,6 @@
 import pytest
-from qiskit_state_evolution_recorder.compability import proxy_obj
+
+from qiskit_state_evolution_recorder.compatibility import proxy_obj
 
 
 class SingleMatchObject:
@@ -144,7 +145,7 @@ def test_proxy_method_access():
 
     # Methods are wrapped in proxy objects
     method_proxy = proxy.public_method
-    assert hasattr(method_proxy, 'orig_obj')
+    assert hasattr(method_proxy, "orig_obj")
     # The actual method is accessible through proxy_obj
     assert method_proxy.orig_obj() == "public_method"
 
@@ -156,7 +157,7 @@ def test_proxy_private_method_access():
 
     # Private methods are wrapped in proxy objects
     method_proxy = proxy._private_method
-    assert hasattr(method_proxy, 'orig_obj')
+    assert hasattr(method_proxy, "orig_obj")
     # The actual method is accessible through proxy_obj
     assert method_proxy.orig_obj() == "private_method"
 

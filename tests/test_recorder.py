@@ -1,8 +1,21 @@
+import matplotlib
 import pytest
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
 
 from qiskit_state_evolution_recorder import StateEvolutionRecorder
+
+
+# Set non-interactive backend for testing to avoid GUI-related issues
+@pytest.fixture(autouse=True, scope="session")
+def matplotlib_backend():
+    backend = matplotlib.get_backend()
+    if backend != "Agg":
+        matplotlib.use("Agg", force=True)
+
+    yield backend != "Agg"
+    if backend != "Agg":
+        matplotlib.use(backend, force=True)
 
 
 @pytest.fixture
@@ -25,12 +38,12 @@ def test_initialization(simple_circuit):
     recorder = StateEvolutionRecorder(simple_circuit)
     assert recorder._qc == simple_circuit
     assert isinstance(recorder._initial_state, Statevector)
-    assert recorder._initial_state == Statevector.from_label('00')
+    assert recorder._initial_state == Statevector.from_label("00")
 
 
 def test_initialization_with_custom_state(simple_circuit):
     """Test initialization with a custom initial state."""
-    custom_state = Statevector.from_label('11')
+    custom_state = Statevector.from_label("11")
     recorder = StateEvolutionRecorder(simple_circuit, initial_state=custom_state)
     assert recorder._initial_state == custom_state
 
@@ -38,12 +51,7 @@ def test_initialization_with_custom_state(simple_circuit):
 def test_initialization_with_custom_parameters(simple_circuit):
     """Test initialization with custom parameters."""
     recorder = StateEvolutionRecorder(
-        simple_circuit,
-        figsize=(8, 8),
-        dpi=150,
-        num_cols=3,
-        select=[0],
-        style={'name': 'textbook'}
+        simple_circuit, figsize=(8, 8), dpi=150, num_cols=3, select=[0], style={"name": "textbook"}
     )
     size = recorder._frame_renderer._fig.get_size_inches()
     assert size[0] == 8 and size[1] == 8  # Check width and height separately

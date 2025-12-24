@@ -4,7 +4,7 @@ from qiskit.circuit import InstructionSet
 from typing import Generator, Iterable, Tuple, List, Set, Optional
 import numpy as np
 
-from .compability import proxy_obj
+from .compatibility import proxy_obj
 
 
 def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstruction]]:
