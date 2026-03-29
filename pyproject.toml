@@ -32,8 +32,8 @@ classifiers = [
 dependencies = [
     "matplotlib==3.10.8",
     "matplotlib-inline==0.2.1",
-    "numpy<2.4.3",
-    "qiskit>=2.3.0,<=2.3.0",
+    "numpy<2.4.5",
+    "qiskit>=2.3.1,<=2.3.1",
     "pillow==12.1.1",
     "pylatexenc==2.10",
     "tqdm==4.67.3",
