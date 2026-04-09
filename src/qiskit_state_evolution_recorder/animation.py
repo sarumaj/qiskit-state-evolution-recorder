@@ -1,12 +1,14 @@
-from typing import Generator, Union, Optional
-from numpy import ndarray, uint8
+import logging
 import os
 from multiprocessing import Lock
-from tqdm import tqdm
-import logging
+from typing import Generator, Optional, Union
 
-from .frame_renderer import FrameRenderer
+from numpy import uint8
+from numpy.typing import NDArray
+from tqdm import tqdm
+
 from .backend import get_best_backend
+from .frame_renderer import FrameRenderer
 
 logger = logging.getLogger("qiskit_state_evolution_recorder.animation")
 
@@ -41,13 +43,13 @@ class AnimationRecorder:
     def record(
         self,
         filename: str,
-        frames: Generator[Union[str, ndarray[uint8]], None, None],
+        frames: Generator[Union[str, NDArray[uint8]], None, None],
         total_frames: int,
         *,
         fps: int = 60,
         interval: int = 200,
         disk: bool = False,
-        pbar: Optional[tqdm] = None
+        pbar: Optional[tqdm] = None,  # type: ignore[reportMissingTypeArgument,reportUnknownParameterType]
     ):
         """
         Record the frames into a video file.
@@ -96,14 +98,14 @@ class AnimationRecorder:
             logger.info(f"Using {backend_name} for video recording")
 
             # Record using the selected backend
-            self._backend.record(
+            self._backend.record(  # type: ignore[reportUnknownMemberType]
                 filename=filename,
                 frames=frames,
                 total_frames=total_frames,
                 fps=fps,
                 interval=interval,
                 disk=disk,
-                pbar=pbar
+                pbar=pbar,
             )
 
         except KeyboardInterrupt:

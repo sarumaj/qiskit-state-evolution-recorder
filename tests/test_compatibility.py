@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from qiskit_state_evolution_recorder.compatibility import proxy_obj
@@ -18,10 +20,10 @@ class SingleMatchObject:
     def _private_method(self):
         return "private_method"
 
-    def method_with_args(self, arg1, arg2):
+    def method_with_args(self, arg1: str, arg2: str):
         return f"method_with_args: {arg1}, {arg2}"
 
-    def method_with_kwargs(self, **kwargs):
+    def method_with_kwargs(self, **kwargs: Any):
         return f"method_with_kwargs: {kwargs}"
 
 

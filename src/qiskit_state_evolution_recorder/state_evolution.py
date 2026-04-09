@@ -8,7 +8,7 @@ from qiskit.quantum_info import Statevector
 
 from .compatibility import proxy_obj
 
-CircuitInstructionType: TypeAlias = CircuitInstruction  # pyright: ignore[reportInvalidTypeForm]
+CircuitInstructionType: TypeAlias = CircuitInstruction  # type: ignore[reportInvalidTypeForm]
 
 
 def group_instructions(qc: QuantumCircuit) -> List[List[CircuitInstructionType]]:

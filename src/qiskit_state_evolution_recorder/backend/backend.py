@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Optional, Union
 
-from numpy import ndarray, uint8
+from numpy import uint8
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 
@@ -41,13 +42,13 @@ class AnimationBackend(ABC):
     def record(
         self,
         filename: str,
-        frames: Generator[Union[str, ndarray[uint8]], None, None],
+        frames: Generator[Union[str, NDArray[uint8]], None, None],
         total_frames: int,
         *,
         fps: int = 60,
         interval: int = 200,
         disk: bool = False,
-        pbar: Optional[tqdm] = None
+        pbar: Optional[tqdm] = None,  # type: ignore[reportMissingTypeArgument,reportUnknownParameterType]
     ):
         """
         Record frames into a video file.

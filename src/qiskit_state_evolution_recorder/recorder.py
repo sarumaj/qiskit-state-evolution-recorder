@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any, Generator, List, Optional, Union
 
 from numpy import ndarray
-from qiskit.circuit import QuantumCircuit
-from qiskit.quantum_info import Statevector
+from qiskit.circuit import QuantumCircuit  # type: ignore[reportMissingTypeStubs]
+from qiskit.quantum_info import Statevector  # type: ignore[reportMissingTypeStubs]
 from tqdm import tqdm
 
 from .animation import AnimationRecorder

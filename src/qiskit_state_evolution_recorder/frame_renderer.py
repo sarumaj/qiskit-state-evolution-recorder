@@ -1,23 +1,24 @@
-# pyright: basic
-
 import logging
 import os
 from tempfile import gettempdir
-from typing import Any, Iterable, List, Optional, Tuple, TypeAlias, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, TypeAlias, Union, cast
+
+from numpy.typing import NDArray
 
 FileDescriptorOrPath: TypeAlias = int | str | os.PathLike[str] | os.PathLike[bytes] | bytes
 
-
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import qiskit.visualization.state_visualization  # type: ignore[reportMissingTypeStubs]
 from matplotlib import get_backend
 from matplotlib import use as use_backend
-from numpy import asarray, ceil, ndarray, uint8
+from matplotlib.artist import Artist
+from matplotlib.figure import Figure
+from numpy import asarray, ceil, ndarray
 from PIL.Image import open as open_image
-from qiskit.circuit import InstructionSet, QuantumCircuit
-from qiskit.quantum_info import Statevector
-from qiskit.visualization import plot_bloch_vector
-from qiskit.visualization.state_visualization import _bloch_multivector_data
+from qiskit.circuit import InstructionSet, QuantumCircuit  # type: ignore[reportMissingTypeStubs]
+from qiskit.quantum_info import Statevector  # type: ignore[reportMissingTypeStubs]
+from qiskit.visualization import plot_bloch_vector  # type: ignore[reportMissingTypeStubs,reportUnknownVariableType]
 
 from .compatibility import proxy_obj
 
@@ -50,7 +51,7 @@ class FrameRenderer:
         dpi: Optional[float] = None,
         num_cols: int = 5,
         select: Optional[List[int]] = None,
-        style: Optional[dict] = None,
+        style: Optional[Dict[str, str]] = None,
     ):
         """
         Initialize the FrameRenderer.
@@ -67,7 +68,7 @@ class FrameRenderer:
             Number of columns for Bloch sphere visualization
         select: Optional[List[int]]
             The qubits to select for the bloch vectors to display
-        style: Optional[dict]
+        style: Optional[Dict[str, str]]
             The style of the quantum circuit diagram
 
         Raises:
@@ -87,7 +88,7 @@ class FrameRenderer:
             raise ValueError("Selected qubits must be within circuit range")
 
         self._qc = qc
-        self._fig = plt.figure(figsize=figsize, dpi=dpi)
+        self._fig = plt.figure(figsize=figsize, dpi=dpi)  # type: ignore[reportUnknownMemberType]
         self._selected_qubits = list(range(qc.num_qubits)) if not select else sorted(select)
         self._style = style or {"name": "textbook"}
         self._text = None
@@ -99,7 +100,32 @@ class FrameRenderer:
         self._setup_layout(num_cols)
 
         # Draw the quantum circuit diagram
-        self._qc.draw(output="mpl", fold=-1, style=self._style, ax=self._ax[0][0] if self._ax else None)
+        self._qc.draw(  # type: ignore[reportUnknownMemberType]
+            output="mpl",
+            fold=-1,
+            style=self._style,
+            ax=self._ax[0][0] if self._ax else None,
+        )
+
+    @property
+    def figure(self) -> Figure:
+        """
+        Get the current figure.
+
+        Returns:
+        --------
+        Figure
+            The current figure.
+
+        Raises:
+        -------
+        RuntimeError
+            If the figure is not initialized
+        """
+        if not self._fig:
+            raise RuntimeError("Figure not initialized")
+
+        return self._fig
 
     def _setup_layout(self, num_cols: int):
         """
@@ -189,12 +215,10 @@ class FrameRenderer:
         RuntimeError
             If there's an error saving the frame
         """
-        if not isinstance(frame_data, tuple) or len(frame_data) != 2:
+        if len(frame_data) != 2:
             raise ValueError("frame_data must be a tuple of (Statevector, Iterable[InstructionSet])")
 
         state, operations = frame_data
-        if not isinstance(state, Statevector):
-            raise ValueError("frame_data[0] must be a Statevector")
 
         if self._text:
             self._text.remove()
@@ -216,22 +240,25 @@ class FrameRenderer:
             raise RuntimeError("Figure not initialized")
 
         # Draw the figure
-        self._fig.canvas.draw()
+        self._fig.canvas.draw()  # type: ignore[reportUnknownMemberType]
 
         # Save the figure to disk
         if disk:
             filename = os.path.join(gettempdir(), f"{index}.png")
             try:
-                self._fig.savefig(filename, format="png")
+                self._fig.savefig(filename, format="png")  # type: ignore[reportUnknownMemberType]
                 return filename
             except Exception as e:
                 raise RuntimeError(f"Error saving frame to disk: {str(e)}")
 
         # Convert figure to image array
         try:
-            img = asarray(self._fig.canvas.renderer.buffer_rgba())[  # pyright: ignore[reportAttributeAccessIssue]
-                :, :, :3
-            ]
+            img = cast(
+                NDArray[Any],
+                asarray(
+                    self._fig.canvas.renderer.buffer_rgba()  # type: ignore[reportUnknownArgumentType,reportUnknownMemberType,reportAttributeAccessIssue]
+                )[:, :, :3],
+            )
             return img
         except Exception as e:
             raise RuntimeError(f"Error converting frame to image array: {str(e)}")
@@ -253,7 +280,12 @@ class FrameRenderer:
         if state.dim != 2**self._qc.num_qubits:
             raise ValueError(f"State dimension {state.dim} doesn't match circuit size {2**self._qc.num_qubits}")
 
-        bloch_data = _bloch_multivector_data(state)
+        bloch_data = cast(
+            List[List[float]],
+            qiskit.visualization.state_visualization._bloch_multivector_data(  # type: ignore[reportUnknownMemberType, reportPrivateUsage]
+                state
+            ),
+        )
         for i, partition in enumerate(self._qubit_partitions or []):
             for j, qubit in enumerate(partition):
                 try:
@@ -277,7 +309,7 @@ class FrameRenderer:
         if not operations:
             return
 
-        fragments = []
+        fragments: List[str] = []
 
         class SafeObject:
             def __init__(self, core: Any):
@@ -292,10 +324,13 @@ class FrameRenderer:
         for gate in operations:
             fragments.append(
                 "{0} -> {1}".format(
-                    gate.operation.name,  # pyright: ignore[reportAttributeAccessIssue]
+                    gate.operation.name,  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType,reportAttributeAccessIssue]
                     [
                         f"{q._register.name.orig_obj}{q._index.orig_obj}"
-                        for q in map(proxy_obj, gate.qubits)  # pyright: ignore[reportAttributeAccessIssue]
+                        for q in map(
+                            proxy_obj,
+                            gate.qubits,  # type: ignore[reportAttributeAccessIssue,reportUnknownMemberType,reportUnknownArgumentType]
+                        )
                     ],
                 )
             )
@@ -303,11 +338,17 @@ class FrameRenderer:
         if not self._fig:
             raise RuntimeError("Figure not initialized")
 
-        self._text = self._fig.text(
-            0.5, 0.95, " | ".join(fragments), ha="center", va="bottom", fontsize=15, transform=self._fig.transFigure
+        self._text = self._fig.text(  # type: ignore[reportUnknownMemberType]
+            0.5,
+            0.95,
+            " | ".join(fragments),
+            ha="center",
+            va="bottom",
+            fontsize=15,
+            transform=self._fig.transFigure,
         )
 
-    def update_frame(self, image: Union[FileDescriptorOrPath, ndarray[Any, Any]], disk: bool):
+    def update_frame(self, image: Union[FileDescriptorOrPath, ndarray[Any, Any]], disk: bool) -> Iterable[Artist]:
         """
         Update the figure with a new frame.
 
@@ -345,7 +386,11 @@ class FrameRenderer:
             # Create a new axes for the image that takes up the entire figure space
             # [0, 0, 1, 1] means: bottom-left corner at (0,0) with width=1 and height=1
             # This ensures the image fills the entire figure without any margins
-            self._ax = [[self._fig.add_axes((0, 0, 1, 1))]]
+            self._ax = [
+                [
+                    self._fig.add_axes((0, 0, 1, 1)),  # type: ignore[reportUnknownMemberType]
+                ]
+            ]
             self._ax[0][0].axis("off")
 
         try:
@@ -353,18 +398,20 @@ class FrameRenderer:
                 raise RuntimeError("Axes not initialized")
 
             if disk:
-                if isinstance(
-                    image, FileDescriptorOrPath  # pyright: ignore[reportArgumentType]
-                ) and not os.path.exists(image):
+                if isinstance(image, FileDescriptorOrPath) and not os.path.exists(  # type: ignore[reportArgumentType]
+                    image
+                ):
                     raise FileNotFoundError(f"Frame file not found: {image}")
-                img = open_image(image)  # pyright: ignore[reportArgumentType]
-                self._ax[0][0].imshow(img)
+                img = open_image(image)  # type: ignore[reportArgumentType]
+                self._ax[0][0].imshow(img)  # type: ignore[reportUnknownMemberType]
             elif isinstance(image, ndarray):
-                self._ax[0][0].imshow(image)
+                self._ax[0][0].imshow(image)  # type: ignore[reportUnknownMemberType]
             else:
                 raise ValueError("Image must be a filename (if disk=True) or an image array (if disk=False)")
         except Exception as e:
             raise RuntimeError(f"Error displaying frame: {str(e)}")
+
+        return self._ax[0][0].get_images()
 
     def close(self):
         """

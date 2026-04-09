@@ -55,9 +55,6 @@ qiskitrecorder = "qiskit_state_evolution_recorder.__main__:main"
 [project.urls]
 "Homepage" = "https://github.com/sarumaj/qiskit-state-evolution-recorder"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
