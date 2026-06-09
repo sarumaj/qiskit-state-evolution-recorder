@@ -36,7 +36,7 @@ dependencies = [
     "qiskit>=2.4.1,<=2.4.1",
     "pillow==12.2.0",
     "pylatexenc==2.10",
-    "tqdm==4.68.1",
+    "tqdm==4.68.2",
 ]
 
 [project.optional-dependencies]
