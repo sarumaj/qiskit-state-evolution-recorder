@@ -34,7 +34,7 @@ dependencies = [
     "matplotlib-inline==0.2.2",
     "numpy<2.5.1",
     "qiskit>=2.4.2,<=2.4.2",
-    "pillow==12.2.0",
+    "pillow==12.3.0",
     "pylatexenc==2.10",
     "tqdm==4.68.3",
 ]
