@@ -41,7 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 opencv = [
-    "opencv-python==4.13.0.92"
+    "opencv-python==5.0.0.93"
 ]
 test = [
     "psutil==7.2.2",
