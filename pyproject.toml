@@ -32,7 +32,7 @@ classifiers = [
 dependencies = [
     "matplotlib==3.11.2",
     "matplotlib-inline==0.2.2",
-    "numpy<2.5.4",
+    "numpy<2.5.5",
     "qiskit>=2.5.2,<=2.5.2",
     "pillow==12.3.0",
     "pylatexenc==2.11",
