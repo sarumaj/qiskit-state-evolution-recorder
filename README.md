@@ -1,5 +1,5 @@
-[![release](https://github.com/sarumaj/qiskit-state-evolution-recorder/actions/workflows/release.yml/badge.svg)](https://github.com/sarumaj/qiskit-state-evolution-recorder/actions/workflows/release.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/sarumaj/qiskit-state-evolution-recorder?logo=github)](https://github.com/sarumaj/qiskit-state-evolution-recorder/releases/latest)
+[![test](https://git.ciepiela.org/dawid/qiskit-state-evolution-recorder/actions/workflows/test.yml/badge.svg)](https://git.ciepiela.org/dawid/qiskit-state-evolution-recorder/actions?workflow=test.yml)
+[![Release](https://img.shields.io/gitea/v/release/dawid/qiskit-state-evolution-recorder?gitea_url=https%3A%2F%2Fgit.ciepiela.org&logo=forgejo)](https://git.ciepiela.org/dawid/qiskit-state-evolution-recorder/releases/latest)
 [![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/sarumaj/qiskit-state-evolution-recorder)](https://github.com/sarumaj/qiskit-state-evolution-recorder/blob/main/pyproject.toml)
 
 ---
