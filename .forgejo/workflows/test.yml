@@ -1,0 +1,35 @@
+# The tests of every change: pushes to main and to renovate/all-patch, where Renovate's
+# patches merge from once this passes (no ignoreTests in renovate.json), and pull requests.
+# As release.yml runs them: ffmpeg for the animations, and the package uninstalled again
+# (the tests import it from src).
+name: Test
+# A failed job mails whoever started the run. Renovate's bot has no mailbox: when its
+# branch fails, Renovate opens a pull request, which mails the repository's watchers.
+enable-email-notifications: true
+'on':
+  push:
+    branches:
+    - main
+    - renovate/all-patch
+  pull_request: null
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: https://github.com/actions/checkout@v7
+    - name: Set up Python
+      uses: https://github.com/actions/setup-python@v7
+      with:
+        python-version: '3.15'
+    - name: Set up ffmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e '.[test,opencv]'
+        pip uninstall -y qiskit-state-evolution-recorder
+    - name: Run tests
+      run: pytest
